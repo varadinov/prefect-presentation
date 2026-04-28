@@ -1,0 +1,14 @@
+[project]
+name = "demos"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[full,standard]>=0.136.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "real_project",
+]
