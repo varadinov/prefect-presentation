@@ -1,41 +1,40 @@
 ---
 theme: default
-background: https://cover.sli.dev
-title: FastAPI — Modern Python APIs
+#background: https://cover.sli.dev
+title: Prefect — Workflow Orchestration
 info: |
-  ## FastAPI
-  Type-driven web APIs with automatic docs and validation.
+  ## Prefect
+  Python-native workflow orchestration for data and automation.
 
-  [fastapi.tiangolo.com](https://fastapi.tiangolo.com)
+  [prefect.io](https://www.prefect.io)
 drawings:
   persist: false
 transition: slide-left
 selectable: true
-duration: 45min
+duration: 60min
 colorSchema: light
 layout: cover
 class: text-center
 ---
 
-# FastAPI
+# Prefect is almost Perfect!
 
-Where Simplicity Meets Elegance
+Python Workflow/Orchestration Engine design for humans
 
 <!--
-Welcome: goal is to show how FastAPI reduces boilerplate and uses standards you already know.
+Opening: orchestration connects code to reliable production runs—scheduling, retries, observability, and infrastructure without reinventing a platform.
 -->
 
 
 ---
 layout: default
 ---
+
 # About Me
-* Names
-  - Borislav Varadinov​s
-* Company
-  - Dell Technologies​
-* Job Title​
-  - Senior Principal Engineer​
+
+- **Name:** Borislav Varadinovs
+- **Company:** Dell Technologies
+- **Role:** Senior Principal Engineer
 
 
 ---
@@ -46,820 +45,462 @@ layout: default
 
 <v-clicks>
 
-- Introduction & philosophy
-- Types as the core idea
-- First API & request handling
-- Pydantic models & auto docs
-- Dependency injection & errors
-- Async, project structure, advanced bits
-- OpenAPI metadata & summary
+- Introduction & core concepts
+- Flows, tasks, and building workflows
+- Running, deploying, and scheduling
+- Infrastructure & Prefect Cloud / Server
+- Observability, advanced features & CI/CD
+- Use cases, demo ideas, best practices & summary
 
 </v-clicks>
+
 
 ---
 layout: section
 ---
 
-# 1 · Introduction
+# Introduction
 
-Why FastAPI exists and what it optimizes for
+What Prefect is, why orchestration matters, and where it sits in your stack
+
+
 
 ---
 layout: default
 ---
 
-# What is FastAPI?
+# What is a Workflow Engine?
+
+- Software component that orchestrates a sequence of tasks
+  - Automates
+  - Executes
+  - Manages
+
+- Based on predefined 
+  - Rules
+  - Logic
+  - Conditions
+
+---
+layout: default
+---
+
+# Use cases for Workflow Engine?
+
+- Data Processing Pipelines
+- AI/ML Model Training Pipeline
+- AI Embeddings orchestration
+- API Event Driven Sync
+- Infrastructure & Platform Automation
+- Document Processing Pipelines
+- Business Process Automation
+
+---
+layout: default
+---
+
+# Workflow/Orchestration Engines
+
+- Camunda 
+  - Business process engine with visual workflows (BPMN)
+
+- Apache Airflow 
+  - Cron for data pipelines with DAGs
+
+- Temporal 
+  - Reliable stateful orchestration for distributed systems
+
+- Prefect (Dynamic Workflows)
+  - Python-native orchestration for flexible and dynamic workflows
+
+---
+layout: default
+---
+
+# What is Prefect?
+- Workflow orchestration engine
+  - Coordinates multiple tasks
+  - Handles dependencies and state
+  - Manages retries, failures, and scheduling
+  - Observes and logs execution
+  - More...
+
+- Pure and beautiful Python
+- No DSL, XML, JSON, YAML, etc.
+- Open Source (Apache 2.0)
+
+---
+layout: default
+---
+
+# Prefect Key Features
+- ✅ Dynamic workflows (not static DAGs)
+- ✅ Retries & error handling built-in
+- ✅ Parameterization of flows
+- ✅ Caching and result persistence
+- ✅ Scheduling & event-based triggers
+- ✅ Observability (logs, UI, monitoring)
+- ✅ Concurrency & parallelism control
+- ✅ Testing & local development
+- ✅ Native transactional interface (Rollbacks)
+
+---
+layout: default
+---
+
+# Install Prefect
+* Using pip
+```bash
+pip install prefect
+```
+
+* Using uv
+```bash
+uv add prefect
+```
 
 
-- **Web framework** for building APIs with Python 3.8+
-- **Type hints** for clarity, better tooling, and safer code
-- Built on **Starlette** (ASGI) and **Pydantic**
-- **OpenAPI**: schemas and docs are a side effect of your code
+---
+layout: default
+---
+
+# Prefect Flow Example
+````md magic-move {lines: true }
+```python {*}
+import requests
+import json
+
+def fetch_weather(city: str) -> str:
+    url = f"https://wttr.in/{city}?format=j1"
+    data = requests.get(url).json()
+    return data["current_condition"][0]["temp_C"]
+
+def save_to_file(weather_data: list, filename: str) -> None:
+    with open(filename, "w") as f:
+        json.dump(weather_data, f)
+
+def main() -> None:
+    cities = ["Sofia", "London", "New York"]
+    weather_data = []
+    for city in cities:
+        weather_data.append({"city": city, "temperature": fetch_weather(city)})
+    save_to_file(weather_data, "01_weather_data.json")
+
+if __name__ == "__main__":
+    main()
+
+```
+```python {3,5,11,16|*}
+import requests
+import json
+from prefect import flow, task
+
+@task
+def fetch_weather(city: str) -> str:
+    url = f"https://wttr.in/{city}?format=j1"
+    data = requests.get(url).json()
+    return data["current_condition"][0]["temp_C"]
+
+@task
+def save_to_file(weather_data: list, filename: str) -> None:
+    with open(filename, "w") as f:
+        json.dump(weather_data, f)
+
+@flow
+def main() -> None:
+    cities = ["Sofia", "London", "New York"]
+    weather_data = []
+    for city in cities:
+        weather_data.append({"city": city, "temperature": fetch_weather(city) })
+    save_to_file(weather_data, "01_weather_data.json")
+
+if __name__ == "__main__":
+    main()
+```
+````
+<style>
+:deep(.slidev-code-wrapper pre.shiki) {
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+
+:deep(.slidev-code-wrapper pre.shiki .shiki-magic-move-item) {
+  font-size: inherit !important;
+}
+</style>
+
+
+---
+layout: default
+---
+
+# Complex Workflow Diagram Example 
+
+* Create Virtual Machine
 
 <br />
 
 ```mermaid
 flowchart LR
-  A[Python types] --> B[Validation]
-  A --> C[OpenAPI / JSON Schema]
-  A --> D[Editor support]
-```
-
-<!--
-FastAPI is not a full CMS like Django; it shines at JSON APIs and microservices.
--->
-
----
-layout: default
----
-
-# Why it exists
-
-<v-clicks>
-
-- **Flask** is simple but leaves validation, docs, and async as DIY
-- **Django** is batteries-included for sites, heavier for small JSON APIs
-- Teams wanted **async** without sacrificing clarity and **standards**
-
-</v-clicks>
-
-<div v-click class="mt-8 p-4 rounded-lg bg-teal-500/10 border border-teal-500/30">
-
-**Core philosophy:** easy to learn, fast to code, **ready for production** — with less magic and more types.
-
-</div>
-
----
-layout: section
----
-
-# 2 · Types everywhere
-
-Simplicity through standard Python type hints
-
----
-layout: default
----
-
-# Python type hints
-<v-clicks>
-
-- Optional labels on parameters, return values, and variables
-- Not runtime checks by default
-- Example
-````md magic-move {lines: true }
-```python {*}
-def count_words(text):
-    words = text.split()
-    result = {}
-    
-    for word in words:
-        result[word] = result.get(word, 0) + 1
-    
-    return result
-```
-
-```python {*}
-def count_words(text: str) -> dict[str, int]:
-    words = text.split()
-    result: dict[str, int] = {}
-    
-    for word in words:
-        result[word] = result.get(word, 0) + 1
-    
-    return result
-```
-````
-- **Why they exists?** 
-  - IDEs 
-  - Static checkers
-  - Modern libraries and frameworks
-</v-clicks>
-
-
-<!--
-Type hints are optional at runtime (PEP 484+); FastAPI reads them for validation and OpenAPI.
--->
-
-
----
-layout: default
----
-
-# Type hints = contract
-
-- No custom DSL — **plain `typing`**
-- Parameters and return types drive parsing and validation
-- **IDEs** autocomplete routes, models, and errors
-
-```python
-def greet(name: str) -> str:
-    return f"Hello, {name}"
-```
-
-<div class="text-sm opacity-80 mt-2">
-
-Same idea at scale: path, query, body, headers — all typed.
-
-</div>
-
----
-layout: default
----
-
-# Pydantic
-
-* Library used for
-  * Data validation 
-  * Serialization 
-  * Deserialization
-
-* Why Pydantic
-  * Validate incoming data (e.g., APIs, Databases)
-  * Catch errors early
-  * Work cleanly with typing
-
-
----
-layout: default
----
-
-# Pydantic (Example)
-
-````md magic-move {lines: true }
-```python {1|3|4|5|6|*}
-from pydantic import BaseModel
-
-class Book(BaseModel):
-  name: str
-  price: float
-```
-```python {7-9}
-from pydantic import BaseModel
-
-class Book(BaseModel):
-  name: str
-  price: float
-
-json_data = '{"name": "Brave New World", "price": 13.2}'
-
-book = Book.model_validate_json(json_data)
-```
-````
-
-<v-clicks>
-
-- **`BaseModel`** - define shapes with normal Python types
-- **Validation** - invalid data raises clear errors
-- **JSON-friendly** - parse and serialize dicts / JSON
-- **Schema for free** - each model maps to **JSON Schema**
-
-</v-clicks>
-
----
-layout: default
----
-
-# Pydantic (Field Example)
-
-````md magic-move {lines: true }
-```python {*}
-from pydantic import BaseModel
-
-class Book(BaseModel):
-  name: str
-  price: float
-  tags: list[str]
-```
-```python {*}
-from pydantic import BaseModel, Field
-
-class Book(BaseModel):
-  name: str = Field(min_length=1, max_length=200)
-  price: float = Field(gt=0, description="Price in USD")
-  tags: list[str] = Field(default_factory=list)
-```
-````
-
-<v-clicks>
-
-- **`Field`** — constraints beyond the type: `gt` / `lt`, `min_length` / `max_length`, regex, and more
-- **`default` or `default_factory`** — Default options
-- **`description`** — ends up in **JSON Schema**
-- **Errors stay structured** — validations report which field failed and why
-
-</v-clicks>
-
----
-layout: default
----
-
-# Pydantic (Nested Example)
-
-````md magic-move {lines: true }
-```python {*}
-from pydantic import BaseModel
-
-class Book(BaseModel):
-  name: str
-  price: float
-
-```
-```python {7-9|*}
-from pydantic import BaseModel
-
-class Book(BaseModel):
-  name: str
-  price: float
-
-class User(BaseModel):
-  email: str
-  books: list[Book] = Field(default_factory=list)
-```
-````
-
-
----
-layout: section
----
-
-# 3 · Your first API
-
-Minimal code, automatic responses
-
----
-layout: default
----
-
-# Install FastAPI
-
-* pip 
-
-```bash
-pip install "fastapi[standard]"
-```
-
-* uv
-
-```bash
-uv add "fastapi[standard]"
-```
-
-<div v-click class="mt-8 p-4 rounded-lg bg-teal-500/10 border border-teal-500/30">
-
-**Python Virtual Environment (venv):** always create venv for your projects
-
-</div>
-
-
-
-
-
----
-layout: default
----
-
-# Hello, FastAPI
-
-```python {1|3|5|6|7|all}
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/")
-def read_root():
-    return {"message": "Hello World"}
-```
-
-<v-clicks>
-
-- `FastAPI()` — ASGI app
-- `@app.get("/")` — **path operation** (HTTP GET)
-- Return a **dict** → JSON response with correct `Content-Type`
-
-</v-clicks>
-
----
-layout: default
----
-
-# FastAPI and Types
-
-```python {all}
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-app = FastAPI()
-
-class Book(BaseModel):
-  name: str
-  price: float
-
-books = [
-  Book(name="Brave New World", price=13.2),
-  Book(name="1984", price=15.8),
-]
-
-@app.get("/books/{book_id}", response_model=Book)
-def get_book(book_id: int):
-    if not 0 <= book_id < len(books):
-        raise HTTPException(status_code=404, detail="Book not found")
-    return books[book_id]
-
-@app.get("/books", response_model=list[Book])
-def list_books():
-    return books
-```
-
----
-layout: default
----
-
-# FastAPI (run)
-
-```bash
-uvicorn main:app --reload
-```
-
-`main` = your file name without `.py`; `app` = the `FastAPI()` instance.
-
-
----
-layout: two-cols-header
----
-
-# FastAPI vs Flask
-::left::
-<div class="mr-4">
-
-```python {all}
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-app = FastAPI()
-
-class Book(BaseModel):
-  name: str
-  price: float
-
-books = [Book(name="1984", price=15.8)]
-
-@app.get("/books/{book_id}", response_model=Book)
-def get_book(book_id: int):
-    return books[book_id]
-
-@app.get("/books", response_model=list[Book])
-def list_books():
-    return books
-```
-
-</div>
-
-::right::
-```python {all}
-from flask import Flask, jsonify, abort
-
-app = Flask(__name__)
-
-books = [{"name": "Brave New World", "price": 13.2}]
-
-@app.route("/books/<int:book_id>", methods=["GET"])
-def get_book(book_id):
-    return jsonify(books[book_id])
-
-@app.route("/books", methods=["GET"])
-def list_books():
-    return jsonify(books)
+  vm_inputs["<b>Inputs</b><br/>• VM name<br/>• Tenant id<br/>• T-shirt size<br/>• Public IP (Yes/No)<br/>• Firewall settings"]
+
+  vm_inputs --> validate{VM already exists?}
+  validate -->|yes| abort[Stop — conflict]
+  validate -->|no| storage[Reserve storage]
+  validate -->|no| cluster[Reserve cluster]
+  validate -->|no| acquire[Acquire IP]
+  validate -->|no| dbprog[DB write in-progress]
+
+  storage --> join(( ))
+  cluster --> join
+  acquire --> join
+  dbprog --> join
+
+  join --> vol[Create volume] --> vm[Create VM] --> attvol[Attach volume] --> attip[Attach IP] --> fw[Configure firewall] --> dbdone[DB write completed]
 ```
 
 ---
 layout: section
 ---
 
-# 4 · Request handling
 
-Path, query, and body — parsed for you
+# Core Concepts Overview
+
+Architecture, vocabulary, and the lifecycle mental model
+
 
 ---
 layout: default
 ---
 
-# Parameters
+# Prefect Architecture Overview (The simple way)
 
-* Path
+```mermaid
+flowchart LR
+  Code["Flow code (Python)"] --> Serve["serve process"]
 
-```python
-@app.get("/items/{item_id}")
-def read_item(item_id: int):
-    return {"id": item_id}
+  Serve["serve process"] --> API["Prefect Control Plane"]
+  UI["Prefect UI"] --> API["Prefect Control Plane"]
+  API <--> DB["DB"]
 ```
 
-* Query
+- **Flow code** 
+  - Runs locally in a `serve` process and talks to API
+- **Prefect UI** 
+  - Talks to the **API (Control Plane)** 
+- **Prefect Control Plane** 
+  - API, Orchestration Engine, Scheduler, UI
+  - Persists state/metadata in the **DB**
 
-```python
-@app.get("/search")
-def search(q: str, limit: int = 10):
-    return {"q": q, "limit": limit}
-```
-
-* Body
-
-```python
-...
-class Item(BaseModel):
-    name: str
-    price: float
-
-@app.post("/items")
-def create_item(item: Item):
-    return item
-```
-
-
----
-layout: section
----
-
-# 5 · Automatic API docs
-
-The “wow” moment
 
 ---
 layout: default
 ---
 
-# Swagger & ReDoc
+# Key Concepts
 
-- **`/docs`** — Swagger UI (try it out)
-- **`/redoc`** — ReDoc (readable reference)
-- Generated from **OpenAPI 3** + **JSON Schema**
+* **Flow:** Top-level workflow: a `@flow` Python callable
+* **Task:** `@task` unit of work: retries, caching, concurrency hooks 
+* **Deployment:** Published version of the flow
+* **Flow run:** an execution of a flow
+* **Task run:** an execution of a task within that run
 
-<br />
-<div class="text-lg space-y-4">
-
-| **What you skip** | **What you get** |
-|---------------|----------------|
-| Hand-written OpenAPI | Live spec |
-| Example payloads | From models |
-| Try-request UI | Built-in |
-
-</div>
-
-<div class="mt-6 p-3 rounded bg-amber-500/10 border border-amber-500/30 text-sm">
-
-👉 Docs are not an afterthought — they stay in sync with code.
-
-</div>
-
----
-layout: section
----
-
-# 7 · Dependency injection
-
-`Depends()` for clean architecture
 
 ---
 layout: default
 ---
 
-# Reusable dependencies
+# Flow
 
-```python {1|3-8|9|all}
-from fastapi import Depends, FastAPI
-
-app = FastAPI()
-
-def get_settings():
-    return {"api_key": "..."}
-
-@app.get("/secure")
-def secure(data: dict = Depends(get_settings)):
-    return {"configured": bool(data.get("api_key"))}
-```
-
-<v-clicks>
-
-- **`Depends(callable)`** runs per request; result injected into the route
-- Perfect for **DB sessions**, **auth**, **config**, shared validation
-- Easy to **override in tests** by swapping dependencies
-
-</v-clicks>
+- Function decorated with **`@flow`**
+- Top-level **entry** 
+- Composes graph of **tasks** 
+- Optional parameters
+- Dynamic structure
+- Nested Flows
 
 ---
-layout: section
+layout: default
 ---
 
-# 8 · Validation & errors
+# Task
 
-Less surprise at runtime
+- Function decorated with **`@task`**
+- Optional parameters
+- Optional **Retries**, **retry delays**, and **timeouts** 
+- **Caching** 
+- **Result Persistence**
 
----
-layout: two-cols-header
----
-
-# Built-in Validation (Pydantic)
-
-- Request data validation (using the types and **`Field(...)`** constraints)
-- **422 Unprocessable Entity** if validation fail
-
-::left::
-<div class="mr-4">
-
-**Model + route**
-
-```python
-from fastapi import FastAPI
-from pydantic import BaseModel, Field
-
-app = FastAPI()
-
-class Item(BaseModel):
-    name: str = Field(min_length=1, max_length=100)
-    price: float = Field(gt=0)
-
-@app.post("/items")
-def create_item(item: Item):
-    return item
-```
-</div>
-
-::right::
-
-**Bad body** `POST /items`
-
-```json
-{ "name": "Brave New World", "price": -5 }
-```
-
-**442 Response** (`detail` is a list of errors):
-
-```json
-{
-  "detail": [
-    {
-      "type": "greater_than",
-      "loc": ["body", "price"],
-      "msg": "Input should be greater than 0",
-      "input": -5
-    }
-  ]
-}
-```
 
 ---
-layout: two-cols-header
+layout: default
 ---
 
-# Custom Validation (HTTPException)
-- Request data validation using HTTP Exception + HTTP Status code (e.g. 404)
+# Concurrency and Parallel Execution
+
+- **Sequentially** running tasks can be slow  
+- **Fan-out** task runs **concurrently**
+- Schedule tasks with **`.submit()`** 
+- **Fan-in** results with **`future.result()`** 
+- Use **concurrency limits** 
+
+---
+layout: default
+---
+
+# Schedules
+Rules on a **deployment** that tell  **when** to **start new flow runs** automatically
 
 <br />
 
-::left::
+* **Schedule types** (built-in):
 
-<div class="mr-4">
+| Type | Use case |
+|------|----------|
+| **Cron** | “Every day at 06:00 UTC”, classic ops schedules |
+| **Interval** | Every *N* minutes/hours — simple periodic runs |
+| **RRule** | Complex calendars (e.g. weekdays, exceptions) |
+
+
+---
+layout: default
+---
+
+# Tasks Retries
+
+- **Configure per-task** retry policy with `@task(...)`
+- `retries`: number of retry attempts after a **Failed** task run
+- `retry_delay_seconds`: **seconds**, a **list** of delays, or a callable (e.g. `exponential_backoff`)
+- `retry_condition_fn`: decide *whether* to retry for a specific failure
 
 ```python
-from fastapi import FastAPI, HTTPException
+from prefect import flow, task
+from prefect.tasks import exponential_backoff
 
-app = FastAPI()
+@task(
+    retries=4,
+    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+)
+def fetch():
+    raise RuntimeError("transient error")
 
-ALLOWED_IDS = {1, 2, 3}
-
-@app.get("/items/{item_id}")
-def get_item(item_id: int):
-    if item_id not in ALLOWED_IDS:
-        raise HTTPException(
-            status_code=404,
-            detail="Item not found",
-        )
-    return {"id": item_id}
-```
-
-</div>
-
-::right::
-
-**`GET /items/99`** → **`404 Not Found`**
-
-```json
-{
-  "detail": "Item not found"
-}
+@flow
+def pipeline():
+    fetch()
 ```
 
 ---
-layout: section
----
-
-# 9 · Async support
-
-`async` / `await`, I/O vs CPU, and FastAPI + SQLAlchemy
-
----
 layout: default
 ---
 
-# What is asynchronous programming?
-
-<v-clicks>
-
-- **Cooperative concurrency** 
-  * While one task **waits** (network, disk, DB), it can give the control back to the runtime
-- **`async def`** defines a **coroutine**
-- **`await`** pauses *this* coroutine until the awaited operation finishes
-- Good fit for **waiting on I/O**
-
-</v-clicks>
-
----
-layout: default
----
-
-# I/O-bound vs CPU-bound
-
-| | **I/O-bound** | **CPU-bound** |
-|--|--|--|
-| **What** | Waiting on network, database, filesystem, remote APIs | Heavy computation (loops, parsing huge blobs, crypto, ML inference on CPU) |
-| **`async/await`** | Often helps — overlap waits, serve more concurrent requests | **Does not speed up** the math; the GIL / one core still limits you |
-| **What to do** | `async def` + async clients (HTTP, DB drivers that support it) | **Threads**, **processes**, or **offload** to a worker / job queue |
-
-<v-click>
-
-Async is about **not sitting idle** while I/O completes — not about making tight loops faster.
-
-</v-click>
-
----
-layout: default
----
-
-# FastAPI specifics
-
-<v-clicks>
-
-- **ASGI + Starlette:** built for **async** request handling
-- You may use **`def`** or **`async def`** for path operations 
-- FastAPI runs **sync** functions in a **thread pool** 
-- Prefer **`async def`** when the route **`await`s** async I/O 
-- Avoid **blocking** calls (huge CPU work) **inside** `async def`
-
-</v-clicks>
-
-<div v-click class="mt-4 text-sm opacity-90">
-
-Typing, OpenAPI, and validation work the **same** for `def` and `async def`.
-
-</div>
-
----
-layout: default
----
-
-# Example: SQLAlchemy async `select`
+# Tasks Persistence
+- **Persist task results** to storage
+- `persist_result=True/False` (defaults to global setting; **True by default**)
+- Storage options - Local FS (Default),S3,GCP,Azure,Any fsspec,Custom 
 
 ```python
-from fastapi import FastAPI
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from prefect import flow, task
+from prefect_aws.s3 import S3Bucket
 
-app = FastAPI()
+s3 = S3Bucket.load("my-results")
 
-# `User` = your ORM model (table mapping not shown)
+@task(
+    persist_result=True, result_storage=s3
+)
+def load_weather():
+    return {"temp_c": 21}
 
-@app.get("/users/{user_id}")
-async def read_user(user_id: int, session: AsyncSession):
-    result = await session.execute(
-        select(User).where(User.id == user_id),
+@flow
+def pipeline():
+    load_weather()
+```
+
+---
+layout: default
+---
+
+# Tasks Caching and Idempotency
+
+- **Caching**
+  - Reuse a previous task **result** instead of re-running
+  - Great for expensive / deterministic steps
+  - Needs **result persistence** 
+  - Custom **cache key**
+
+<br />
+
+- **Idempotency** (side effects): 
+  - Tasks must be idempotent 
+  - Safe to retry without creating duplicates
+
+
+---
+layout: default
+---
+
+# Artifacts
+- Rich outputs attached to runs 
+- Shown in the **Prefect UI**
+- Markdown, Table, Link, Image, Progress
+
+```python
+from prefect import flow, task
+from prefect.artifacts import create_markdown_artifact
+
+@task
+def report():
+    create_markdown_artifact(
+        key="daily-report",
+        markdown="# Daily report\n- ok",
+        description="Run summary",
     )
-    return result.scalar_one_or_none()
-```
 
-<div class="text-sm opacity-80 mt-2">
-
-`await session.execute(...)` yields while the DB driver waits — other requests can progress on the same loop.
-
-</div>
-
----
-layout: section
----
-
-# 10 · Real project structure
-
-Routers and modules
-
----
-layout: default
----
-
-# `APIRouter` + packages
-
-```text
-app/
-  main.py          # FastAPI() + include_router
-  api/
-    routes_items.py
-    routes_users.py
-```
-
-```python
-# routes_items.py
-from fastapi import APIRouter
-
-router = APIRouter(prefix="/items", tags=["items"])
-
-@router.get("/")
-def list_items():
-    return []
-```
-
-```python
-# main.py
-from fastapi import FastAPI
-from app.api.routes_items import router as items_router
-
-app = FastAPI()
-app.include_router(items_router)
-```
-
-<v-clicks>
-
-- **Separation of concerns**: each router owns a slice of URLs
-- **`tags`** group endpoints in OpenAPI UIs
-
-</v-clicks>
-
----
-layout: section
----
-
-# 11 · Background & more
-
-Tasks, WebSockets, middleware
-
----
-layout: two-cols
----
-
-# Beyond CRUD
-
-::left::
-
-- **`BackgroundTasks`** — fire-and-forget after response (emails, logging)
-- **WebSockets** — first-class for real-time channels
-- **Middleware** — CORS, gzip, custom tracing
-
-::right::
-
-```python
-from fastapi import BackgroundTasks, FastAPI
-
-app = FastAPI()
-
-def write_log(msg: str):
-    ...
-
-@app.post("/notify")
-def notify(bg: BackgroundTasks):
-    bg.add_task(write_log, "sent")
-    return {"queued": True}
+@flow
+def pipeline():
+    report()
 ```
 
 ---
 layout: default
 ---
 
-# Tie it together
+# Event-Driven Workflows
 
-<v-clicks>
+- Automations based on events
+  - Trigger flows based on emitted events
 
-- **Less boilerplate**
-- **Types** → validation + docs + **contracts** with clients
-- **Standards** — OpenAPI & JSON Schema, not a bespoke stack
-- **Simplicity** → fewer moving parts, fewer bugs
-- **Elegance** → Types, Pydantic, DI, routers
-- **Productivity** → ship APIs faster with live docs
+- External Systems
+  - Trigger flows by **API** (from services, CI/CD, scripts)
 
-</v-clicks>
+
+
+---
+layout: section
+---
+
+# Prefect Cloud vs Self-Hosted
+
+Control plane options
+
+
+---
+layout: default
+---
+
+# Prefect Cloud Overview
+
+- **Managed control plane:** API + UI
+- **Flows runs:** execution stays in your network 
+- **Enterprise** features (Workspaces, SSO, RBAC tiers, support)
+- **Billing** typically tied to **usage**
+
+
+---
+layout: default
+---
+
+# Prefect Server (Self-Hosted)
+- **Open-source Prefect server** + **Postgres**
+- Full control over **data residency**, **networking**, and **upgrades**
+- Operate **backups**, **HA**, and **security** patches
+- Limitations for Authentication, Authorization and Audit

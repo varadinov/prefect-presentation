@@ -1,0 +1,28 @@
+from datetime import datetime, timezone
+import requests
+import json
+from prefect import flow, task
+
+@task(task_run_name="Fetch weather — {city}")
+def fetch_weather(city: str) -> str:
+    url = f"https://wttr.in/{city}?format=j1"
+    data = requests.get(url).json()
+    return data["current_condition"][0]["temp_C"]
+
+@task(task_run_name="Save weather data — {filename}")
+def save_to_file(weather_data: list, filename: str) -> None:
+    with open(filename, "w") as f:
+        json.dump(weather_data, f)
+
+@flow(flow_run_name=lambda: f"weather-{datetime.now(timezone.utc):%Y-%m-%d-%H%M}")
+def weather_collector() -> None:
+    cities = ["Sofia", "London", "New York"]
+    weather_data = []
+    for city in cities:
+        weather_data.append({"city": city, "temperature": fetch_weather(city) })
+    save_to_file(weather_data, "01_weather_data.json")
+
+if __name__ == "__main__":
+    weather_collector()
+    print("Press any key to exit...")
+    input()
