@@ -49,7 +49,7 @@ layout: default
 - Flows, tasks, and building workflows
 - Running, deploying, and scheduling
 - Infrastructure & Prefect Cloud / Server
-- Observability, advanced features & CI/CD
+- Observability and advanced features 
 - Use cases, demo ideas, best practices & summary
 
 </v-clicks>
